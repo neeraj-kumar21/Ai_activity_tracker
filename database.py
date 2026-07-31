@@ -31,10 +31,10 @@ def get_all_activity():
 
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM activity")
+    cursor.execute("SELECT * FROM activity_log")
     
     rows = cursor.fetchall()
 
     conn.close()
-    
+
     return rows
