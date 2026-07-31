@@ -32,7 +32,7 @@ def get_all_activity():
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM activity")
-
+    
     rows = cursor.fetchall()
 
     conn.close()
