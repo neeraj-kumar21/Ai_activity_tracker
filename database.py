@@ -24,4 +24,17 @@ def save_activity(timestamp, window_title):
     
     conn.commit()
     conn.close()
+
+
+def get_all_activity():
+    conn = sqlite3.connect("data/activity_tracker.db")
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM activity")
+
+    rows = cursor.fetchall()
+
+    conn.close()
     
+    return rows
