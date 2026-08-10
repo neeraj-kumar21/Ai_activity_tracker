@@ -1,0 +1,6 @@
+{
+    "chat.extensionUnification.enabled": true,
+    "chat.agent.sandbox.allowNetwork": true,
+    "chat.agent.sandbox.retryWithAllowNetworkRequests": false,
+    "chat.agent.sandbox.enabledWindows": "on"
+}
