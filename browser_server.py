@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from database import save_browser_activity
 
 app = Flask(__name__)
 
@@ -8,10 +9,16 @@ def browser_activity():
 
     data = request.get_json()
 
+    title = data.get("title")
+    url = data.get("url")
+
     print("\n===== Browser Activity =====")
     print("Title:", data.get("title"))
     print("URL:", data.get("url"))
     print("============================\n")
+
+
+    save_browser_activity(title ,url)
 
     return jsonify({
         "status": "success"

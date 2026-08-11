@@ -10,7 +10,7 @@ def create_database():
     conn = sqlite3.connect(DB_PATH)
 
     cursor = conn.cursor()
-
+    # window activity table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS activity_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,6 +18,15 @@ def create_database():
             end_time TEXT,
             duration TEXT,
             window_title TEXT
+        )
+    """)
+    # Browser activity table 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS browser_activity (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            title TEXT,
+            url TEXT
         )
     """)
 
@@ -64,3 +73,36 @@ def get_all_activity():
     conn.close()
 
     return rows
+
+def save_browser_activity(title , url):
+    conn = sqlite3.connect("data/activity_tracker.db")
+    cursor = conn.cursor()
+
+
+    cursor.execute("""
+        INSERT INTO browser_activity
+        (timestamp , title ,url)
+        VALUES (datetime('now','localtime'), ?, ?)
+    """, (title, url))
+
+    conn.commit()
+    conn.close()
+
+
+def get_browser_activity():
+
+    conn = sqlite3.connect("data/activity_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT timestamp,title , url
+        FROM browser_activity
+        ORDER BY id DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    return rows
+
+
+

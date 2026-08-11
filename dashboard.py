@@ -78,7 +78,7 @@ analytics_btn = ctk.CTkButton(sidebar_frame, text="📊 Analytics",command=show_
 analytics_btn.pack(pady=10, padx=20, )
 
 browser_btn = ctk.CTkButton(sidebar_frame, text="🌐 Browser Extension",command=show_browser)
-browser_btn.pack(pady=10, padx=20, )    
+browser_btn.pack(pady=10, padx=20)    
 
 
 reports_btn = ctk.CTkButton(sidebar_frame, text="📄 Reports",command=show_reports)
