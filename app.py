@@ -4,6 +4,8 @@ import time
 from activity_tracker import get_active_window_
 from session_manager import SessionManager
 from database import create_database, save_activity
+from datetime import datetime, timedelta
+from report_generator import generate_report
 
 import dashboard
 
