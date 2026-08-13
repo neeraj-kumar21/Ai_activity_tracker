@@ -1,6 +1,5 @@
 import customtkinter as ctk
 from database import get_all_activity
-from ai_analyzer import generate_insight
 
 
 class HomePage(ctk.CTkFrame):
@@ -8,419 +7,304 @@ class HomePage(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
 
+        self.configure(fg_color="#242424")
+
         # ================= HEADER =================
 
-        header = ctk.CTkFrame(self, fg_color="transparent")
-        header.pack(fill="x", padx=30, pady=(25, 10))
-
-        title = ctk.CTkLabel(
-            header,
+        header = ctk.CTkLabel(
+            self,
             text="🏠 AI Activity Dashboard",
             font=("Arial", 32, "bold")
         )
-        title.pack(anchor="w")
+        header.pack(pady=(25, 5))
 
         subtitle = ctk.CTkLabel(
-            header,
+            self,
             text="Monitor your activity and productivity",
-            font=("Arial", 15)
+            font=("Arial", 16)
         )
-        subtitle.pack(anchor="w", pady=(5, 0))
+        subtitle.pack(pady=(0, 25))
 
-    def load_ai_insight(self):
+        # ================= STATS =================
 
-        try:
-
-            insight = generate_insight()
-
-            score = insight["score"]
-            productive = insight["productive_time"]
-            distracting = insight["distracting_time"]
-            top_app = insight["top_app"]
-            message = insight["message"]
-
-            self.score_card.value_label.configure(
-                text=f"{score}%"
-            )
-
-            self.insight_label.configure(
-                text=(
-                    f"{message}\n\n"
-                    f"🚀 Productive: {productive}\n"
-                    f"⚠️ Distracting: {distracting}\n"
-                    f"💻 Most Used: {top_app}"
-                )
-            )
-
-        except Exception as e:
-
-            print("AI Insight Error:", e)
-
-            self.insight_label.configure(
-                text="Unable to analyze activity."
-            )
-
-
-        # ================= STATUS =================
-
-        status_frame = ctk.CTkFrame(self)
-        status_frame.pack(fill="x", padx=30, pady=15)
-
-        status_title = ctk.CTkLabel(
-            status_frame,
-            text="● Tracking Active",
-            font=("Arial", 17, "bold")
+        self.stats_frame = ctk.CTkFrame(
+            self,
+            fg_color="transparent"
         )
-        status_title.pack(side="left", padx=20, pady=15)
-
-
-        # ================= STATISTICS =================
-
-        stats_frame = ctk.CTkFrame(self, fg_color="transparent")
-        stats_frame.pack(fill="x", padx=30, pady=10)
-
-        # Total Activity
-        self.total_card = self.create_card(
-            stats_frame,
-            "⏱ Total Activity",
-            "0h 0m"
-        )
-        self.total_card.pack(
-            side="left",
-            fill="both",
-            expand=True,
-            padx=(0, 10)
+        self.stats_frame.pack(
+            fill="x",
+            padx=30,
+            pady=10
         )
 
-        # Productive
-        self.productive_card = self.create_card(
-            stats_frame,
-            "🚀 Productive",
-            "0h 0m"
+        self.sessions_card = ctk.CTkFrame(
+            self.stats_frame,
+            corner_radius=15
         )
-        self.productive_card.pack(
+        self.sessions_card.pack(
             side="left",
             fill="both",
             expand=True,
             padx=10
         )
 
-        # Applications
-        self.apps_card = self.create_card(
-            stats_frame,
-            "💻 Applications",
-            "0"
+        self.sessions_label = ctk.CTkLabel(
+            self.sessions_card,
+            text="0",
+            font=("Arial", 30, "bold")
         )
-        self.apps_card.pack(
+        self.sessions_label.pack(pady=(20, 5))
+
+        ctk.CTkLabel(
+            self.sessions_card,
+            text="Total Sessions",
+            font=("Arial", 15)
+        ).pack(pady=(0, 20))
+
+        # ================= TOTAL TIME =================
+
+        self.time_card = ctk.CTkFrame(
+            self.stats_frame,
+            corner_radius=15
+        )
+        self.time_card.pack(
             side="left",
             fill="both",
             expand=True,
             padx=10
         )
 
-        # Productivity Score
-        self.score_card = self.create_card(
-            stats_frame,
-            "📊 Productivity",
-            "0%"
+        self.time_label = ctk.CTkLabel(
+            self.time_card,
+            text="0 sec",
+            font=("Arial", 30, "bold")
         )
-        self.score_card.pack(
-            side="left",
-            fill="both",
-            expand=True,
-            padx=(10, 0)
-        )
+        self.time_label.pack(pady=(20, 5))
 
-
-        # ================= TODAY'S ACTIVITY =================
-
-        activity_title = ctk.CTkLabel(
-            self,
-            text="📈 Today's Activity",
-            font=("Arial", 22, "bold")
-        )
-        activity_title.pack(
-            anchor="w",
-            padx=30,
-            pady=(25, 10)
-        )
-
-        self.activity_frame = ctk.CTkScrollableFrame(
-            self,
-            height=220
-        )
-        self.activity_frame.pack(
-            fill="both",
-            expand=True,
-            padx=30,
-            pady=(0, 20)
-        )
-
-
-        # ================= LOAD DATA =================
-
-        self.load_dashboard()
-
-
-
-        # ================= AI INSIGHT =================
-
-        insight_title = ctk.CTkLabel(
-            self,
-            text="🤖 AI Productivity Insight",
-            font=("Arial", 22, "bold")
-        )
-        insight_title.pack(
-            anchor="w",
-            padx=30,
-            pady=(10, 5)
-        )
-
-        self.insight_label = ctk.CTkLabel(
-            self,
-            text="Analyzing your activity...",
-            font=("Arial", 15),
-            wraplength=900,
-            justify="left"
-        )
-        self.insight_label.pack(
-            anchor="w",
-            padx=30,
-            pady=(0, 20)
-        )
-
-        self.load_ai_insight()
-
-                
-
-
-    # ==================================================
-    # CREATE STAT CARD
-    # ==================================================
-
-    def create_card(self, parent, title, value):
-
-        card = ctk.CTkFrame(parent)
-
-        title_label = ctk.CTkLabel(
-            card,
-            text=title,
+        ctk.CTkLabel(
+            self.time_card,
+            text="Total Tracked Time",
             font=("Arial", 15)
+        ).pack(pady=(0, 20))
+
+        # ================= LATEST ACTIVITY =================
+
+        self.latest_card = ctk.CTkFrame(
+            self,
+            corner_radius=15
         )
-        title_label.pack(
+        self.latest_card.pack(
+            fill="x",
+            padx=40,
+            pady=25
+        )
+
+        ctk.CTkLabel(
+            self.latest_card,
+            text="Latest Activity",
+            font=("Arial", 20, "bold")
+        ).pack(
             anchor="w",
             padx=20,
             pady=(15, 5)
         )
 
-        value_label = ctk.CTkLabel(
-            card,
-            text=value,
-            font=("Arial", 26, "bold")
+        self.latest_label = ctk.CTkLabel(
+            self.latest_card,
+            text="No activity yet.",
+            font=("Arial", 15),
+            anchor="w",
+            justify="left"
         )
-        value_label.pack(
+        self.latest_label.pack(
             anchor="w",
             padx=20,
-            pady=(0, 15)
+            pady=(5, 20)
         )
 
-        card.value_label = value_label
+        # ================= RECENT ACTIVITY =================
 
-        return card
+        ctk.CTkLabel(
+            self,
+            text="Recent Activity",
+            font=("Arial", 22, "bold")
+        ).pack(
+            anchor="w",
+            padx=40,
+            pady=(5, 10)
+        )
 
+        self.activity_box = ctk.CTkScrollableFrame(
+            self,
+            height=250,
+            corner_radius=15
+        )
+        self.activity_box.pack(
+            fill="both",
+            expand=True,
+            padx=40,
+            pady=(0, 20)
+        )
 
-    # ==================================================
-    # LOAD DASHBOARD DATA
-    # ==================================================
+        # Load data
+        self.load_data()
 
-    def load_dashboard(self):
+        # Refresh every 5 seconds
+        self.after(5000, self.auto_refresh)
 
-        try:
+    # ==========================================
+    # LOAD DATABASE DATA
+    # ==========================================
 
-            activities = get_all_activity()
+    def load_data(self):
 
-            if not activities:
-                self.show_no_activity()
-                return
+        activities = get_all_activity()
 
+        print("HOME DATA:", activities)
 
-            # Total activity
-            total_seconds = 0
-
-            applications = set()
-
-
-            for activity in activities:
-
-                window_title = activity[4]
-                duration = activity[3]
-
-                applications.add(window_title)
-
-                total_seconds += self.duration_to_seconds(
-                    duration
-                )
-
-
-            # Convert total time
-            total_time = self.format_duration(
-                total_seconds
-            )
-
-
-            # Update cards
-            self.total_card.value_label.configure(
-                text=total_time
-            )
-
-            self.apps_card.value_label.configure(
-                text=str(len(applications))
-            )
-
-
-            # Temporary productivity calculation
-            #
-            # Later we will replace this with
-            # real AI analysis.
-
-            analysis = generate_insight()
-
-            self.productive_card.value_label.configure(
-                text=analysis["productive_time"]
-            )
-
-            self.score_card.value_label.configure(
-                text=f'{analysis["score"]}%'
-            ) 
-
-            # Show activity list
-            self.show_activities(activities)
-
-
-        except Exception as e:
-
-            print("Dashboard error:", e)
-
-
-    # ==================================================
-    # SHOW ACTIVITIES
-    # ==================================================
-
-    def show_activities(self, activities):
-
-        for widget in self.activity_frame.winfo_children():
+        # Clear old activity cards
+        for widget in self.activity_box.winfo_children():
             widget.destroy()
 
+        if not activities:
 
-        # Latest 10 activities
-        for activity in activities[:10]:
+            self.sessions_label.configure(text="0")
+            self.time_label.configure(text="0 sec")
+            self.latest_label.configure(
+                text="No activity recorded yet."
+            )
 
+            ctk.CTkLabel(
+                self.activity_box,
+                text="No activity yet.",
+                font=("Arial", 16)
+            ).pack(pady=30)
+
+            return
+
+        # ================= SESSION COUNT =================
+
+        total_sessions = len(activities)
+
+        self.sessions_label.configure(
+            text=str(total_sessions)
+        )
+
+        # ================= TOTAL TIME =================
+
+        total_seconds = 0
+
+        for activity in activities:
+
+            duration = activity[3]
+
+            try:
+
+                # Example:
+                # 0:00:10.123456
+
+                parts = duration.split(":")
+
+                hours = int(parts[0])
+                minutes = int(parts[1])
+                seconds = float(parts[2])
+
+                total_seconds += (
+                    hours * 3600
+                    + minutes * 60
+                    + seconds
+                )
+
+            except Exception:
+                pass
+
+        minutes = int(total_seconds // 60)
+        seconds = int(total_seconds % 60)
+
+        if minutes > 0:
+
+            total_time = f"{minutes} min {seconds} sec"
+
+        else:
+
+            total_time = f"{seconds} sec"
+
+        self.time_label.configure(
+            text=total_time
+        )
+
+        # ================= LATEST =================
+
+        latest = activities[0]
+
+        latest_time = latest[1]
+        latest_title = latest[4]
+        latest_duration = latest[3]
+
+        self.latest_label.configure(
+            text=(
+                f"Application: {latest_title}\n"
+                f"Started: {latest_time}\n"
+                f"Duration: {latest_duration}"
+            )
+        )
+
+        # ================= ACTIVITY LIST =================
+
+        for activity in activities[:20]:
+
+            activity_id = activity[0]
             start_time = activity[1]
             end_time = activity[2]
             duration = activity[3]
-            window_title = activity[4]
-
+            title = activity[4]
 
             card = ctk.CTkFrame(
-                self.activity_frame
+                self.activity_box,
+                corner_radius=10
             )
 
             card.pack(
                 fill="x",
-                padx=10,
+                padx=5,
                 pady=5
             )
 
-
-            title = ctk.CTkLabel(
+            ctk.CTkLabel(
                 card,
-                text=f"💻 {window_title}",
+                text=f"🖥 {title}",
                 font=("Arial", 15, "bold"),
                 anchor="w"
-            )
-
-            title.pack(
-                fill="x",
+            ).pack(
+                anchor="w",
                 padx=15,
                 pady=(10, 2)
             )
 
-
-            info = ctk.CTkLabel(
+            ctk.CTkLabel(
                 card,
-                text=f"⏱ {duration}   |   {start_time}",
+                text=(
+                    f"Start: {start_time}    "
+                    f"End: {end_time}    "
+                    f"Duration: {duration}"
+                ),
+                font=("Arial", 12),
                 anchor="w"
-            )
-
-            info.pack(
-                fill="x",
+            ).pack(
+                anchor="w",
                 padx=15,
                 pady=(2, 10)
             )
 
+    # ==========================================
+    # AUTO REFRESH
+    # ==========================================
 
-    # ==================================================
-    # NO ACTIVITY
-    # ==================================================
+    def auto_refresh(self):
 
-    def show_no_activity(self):
+        self.load_data()
 
-        for widget in self.activity_frame.winfo_children():
-            widget.destroy()
-
-
-        label = ctk.CTkLabel(
-            self.activity_frame,
-            text="No activity recorded yet.",
-            font=("Arial", 18)
+        self.after(
+            5000,
+            self.auto_refresh
         )
-
-        label.pack(pady=40)
-
-
-    # ==================================================
-    # DURATION → SECONDS
-    # ==================================================
-
-    def duration_to_seconds(self, duration):
-
-        try:
-
-            # Example:
-            # 0:00:05.123456
-
-            parts = str(duration).split(":")
-
-            hours = int(parts[0])
-            minutes = int(parts[1])
-
-            seconds = float(parts[2])
-
-            return (
-                hours * 3600
-                + minutes * 60
-                + seconds
-            )
-
-        except:
-
-            return 0
-
-
-    # ==================================================
-    # SECONDS → READABLE TIME
-    # ==================================================
-
-    def format_duration(self, seconds):
-
-        seconds = int(seconds)
-
-        hours = seconds // 3600
-
-        minutes = (seconds % 3600) // 60
-
-        if hours > 0:
-
-            return f"{hours}h {minutes}m"
-
-        return f"{minutes}m"

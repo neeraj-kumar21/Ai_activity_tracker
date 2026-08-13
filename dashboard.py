@@ -91,9 +91,8 @@ settings_btn.pack(pady=10, padx=20, )
 
 # ==================== Start with Home  =====================
 
-show_home()
+def start_dashboard():
 
-# =================== Start Application =====================
+    show_home()
 
-app.mainloop()
-
+    app.mainloop()

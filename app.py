@@ -1,51 +1,69 @@
+import threading
+import time
+
 from activity_tracker import get_active_window_
 from session_manager import SessionManager
-from database import create_database,save_activity
+from database import create_database, save_activity
 
-import time 
-
-# Create database if it doesn't exist
-create_database()
-
-# Creat Session Manager 
-manager = SessionManager()
-
-# Get the current active window 
-current_window = get_active_window_()
-
-# Start first session 
-manager.start_session(current_window)
-
-print("AI Activity Tracker Started")
+import dashboard
 
 
-while True:
-    # check current active window
-    new_window = get_active_window_()
+# ==========================================
+# ACTIVITY TRACKER
+# ==========================================
 
-    # if user switched to another application
-    if new_window != current_window:
+def start_tracker():
 
-        # End previous session 
-        session = manager.end_session()
+    manager = SessionManager()
 
-        # Print session details
-        print(session)
+    current_window = get_active_window_()
 
-        # Save session details to database  
-        save_activity(
-            session['start_time'],
-            session['end_time'],
-            session['duration'],
-            session['window_title'],
-        )
+    manager.start_session(current_window)
 
-        # Update current window 
-        current_window = new_window
+    print("AI Activity Tracker Started")
 
-        # Start new session
-        manager.start_session(current_window)
+    while True:
+
+        new_window = get_active_window_()
+
+        if new_window != current_window:
+
+            session = manager.end_session()
+
+            print(session)
+
+            save_activity(
+                session["start_time"],
+                session["end_time"],
+                session["duration"],
+                session["window_title"]
+            )
+
+            current_window = new_window
+
+            manager.start_session(current_window)
+
+        time.sleep(2)
 
 
-    # Check every 2 secounds
-    time.sleep(2)
+# ==========================================
+# MAIN
+# ==========================================
+
+if __name__ == "__main__":
+
+    # Create database
+    create_database()
+
+    # Start tracker in background
+    tracker_thread = threading.Thread(
+        target=start_tracker,
+        daemon=True
+    )
+
+    tracker_thread.start()
+
+    print("Tracker started successfully")
+
+    # Start Dashboard
+    dashboard.start_dashboard()
