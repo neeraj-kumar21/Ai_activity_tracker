@@ -10,6 +10,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 DB_PATH = "data/activity_tracker.db"
 REPORT_FOLDER = "reports"
 
+os.makedirs(REPORT_FOLDER, exist_ok=True)
+
 def get_activity_data(start_time,end_time):
 
     conn = sqlite3.connect(DB_PATH)

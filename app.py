@@ -1,105 +1,105 @@
-import threading
-
-
 from activity_tracker import get_active_window_
 from session_manager import SessionManager
 from database import create_database, save_activity
 
 import time
 from datetime import datetime, timedelta
+
 from report_generator import generate_report
 
-import dashboard
+
+# =========================================
+# CREATE DATABASE
+# =========================================
+
+create_database()
 
 
-# ==========================================
-# ACTIVITY TRACKER
-# ==========================================
+# =========================================
+# CREATE SESSION MANAGER
+# =========================================
 
-def start_tracker():
-
-    manager = SessionManager()
-
-    report_start_time = datetime.now()
-    next_report_time = report_start_time + timedelta(hours=8)
-
-    current_window = get_active_window_()
-
-    manager.start_session(current_window)
-
-    print("AI Activity Tracker Started")
-    print("Next report:" , next_report_time)
+manager = SessionManager()
 
 
-# ==========================================
-# MAIN
-# ==========================================
+# =========================================
+# GET CURRENT ACTIVE WINDOW
+# =========================================
 
-if __name__ == "__main__":
-
-    # Create database
-    create_database()
-
-    # ==== Report timing ==============
-    report_start_time = datetime.now()
-    next_report_time = report_start_time + timedelta(hours=8)
+current_window = get_active_window_()
 
 
-    manager = SessionManager()
+# =========================================
+# START FIRST SESSION
+# =========================================
 
-    # Start tracker in background
-    tracker_thread = threading.Thread(
-        target=start_tracker,
-        daemon=True
-    )
+manager.start_session(current_window)
 
-    tracker_thread.start()
 
-    print("Tracker started successfully")
+# =========================================
+# 8 HOUR REPORT TIMER
+# =========================================
 
-    # Start Dashboard
-    dashboard.start_dashboard()
+report_start_time = datetime.now()
 
+# ---- TESTING MODE: 2 minutes ----
+next_report_time = report_start_time + timedelta(minutes=2)
+# ---- PRODUCTION MODE (use this after testing) ----
+# next_report_time = report_start_time + timedelta(hours=8)
+
+print("AI Activity Tracker Started")
+print("Next report:", next_report_time)
+
+
+# =========================================
+# MAIN TRACKING LOOP
+# =========================================
 
 while True:
 
+    # Check current active window
     new_window = get_active_window_()
 
+    # =====================================
+    # WINDOW CHANGED
+    # =====================================
     if new_window != current_window:
 
+        # End previous session
         session = manager.end_session()
-
         print(session)
 
+        # Save activity
         save_activity(
-            session["start_time"],
-            session["end_time"],
-            session["duration"],
-            session["window_title"],
+            session['start_time'],
+            session['end_time'],
+            session['duration'],
+            session['window_title'],
         )
 
+        # Update current window and start new session
         current_window = new_window
-
         manager.start_session(current_window)
 
-    # ==============================
+    # =====================================
     # 8 HOUR REPORT CHECK
-    # ==============================
-
+    # =====================================
     if datetime.now() >= next_report_time:
 
-        report_end_time = datetime.now()
+        print("Generating report NOW...")
 
-        generate_report(
-            report_start_time,
-            report_end_time
-        )
+        # Generate Excel + PDF for the period just completed
+        generate_report(report_start_time, datetime.now())
 
-        report_start_time = report_end_time
+        # Reset window for the NEXT period
+        report_start_time = datetime.now()
 
-        next_report_time = (
-            report_start_time +
-            timedelta(minutes=2)
-        )
+        # ---- TESTING MODE: 2 minutes ----
+        next_report_time = report_start_time + timedelta(minutes=2)
+        # ---- PRODUCTION MODE (use this after testing) ----
+        # next_report_time = report_start_time + timedelta(hours=8)
 
+        print("Next report scheduled:", next_report_time)
+
+    # Check every 2 seconds
     time.sleep(2)
