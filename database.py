@@ -1,152 +1,39 @@
 import sqlite3
 import os
-from datetime import datetime,timedelta
 
-from openpyxl import Workbook
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph,Spacer,Table
-from reportlab.lib.styles import getSampleStyleSheet
 
 DB_PATH = "data/activity_tracker.db"
-REPORT_FOLDER = "reports"
 
-os.makedirs(REPORT_FOLDER, exist_ok=True)
 
-def get_activity_data(start_time,end_time):
+def create_database():
+
+    os.makedirs("data", exist_ok=True)
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
+    # Windows activity table
     cursor.execute("""
-        SELECT start_time, end_time, duration, window_title
-        FROM activity_log
-        WHERE start_time >= ?
-        AND start_time < ?
-        ORDER BY id ASC
-    """, (
-        start_time,
-        end_time
-    ))
-
-    rows = cursor.fetchall()
-
-    conn.close()
-
-    return rows
-
-def create_excel_report(rows, start_time, end_time):
-
-    os.makedirs(REPORT_FOLDER, exist_ok=True)
-
-    filename = (
-        f"activity_report_"
-        f"{start_time.strftime('%Y%m%d_%H%M')}_"
-        f"{end_time.strftime('%Y%m%d_%H%M')}.xlsx"
-    )
-
-    filepath = os.path.join(REPORT_FOLDER, filename)
-
-    workbook = Workbook()
-    sheet = workbook.active
-
-    sheet.title = "Activity Report"
-
-    sheet.append([
-        "Start Time",
-        "End Time",
-        "Duration",
-        "Application"
-    ])
-
-    for row in rows:
-        sheet.append(row)
-
-    workbook.save(filepath)
-
-    return filepath
-
-
-def create_pdf_report(rows, start_time, end_time):
-
-    os.makedirs(REPORT_FOLDER, exist_ok=True)
-
-    filename = (
-        f"activity_report_"
-        f"{start_time.strftime('%Y%m%d_%H%M')}_"
-        f"{end_time.strftime('%Y%m%d_%H%M')}.pdf"
-    )
-
-    filepath = os.path.join(REPORT_FOLDER, filename)
-
-    document = SimpleDocTemplate(
-        filepath,
-        pagesize=A4
-    )
-
-    styles = getSampleStyleSheet()
-
-    elements = []
-
-    elements.append(
-        Paragraph(
-            "AI Activity Tracker - 8 Hour Report",
-            styles["Title"]
+        CREATE TABLE IF NOT EXISTS activity_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            start_time TEXT,
+            end_time TEXT,
+            duration TEXT,
+            window_title TEXT
         )
-    )
+    """)
 
-    elements.append(Spacer(1, 20))
-
-    elements.append(
-        Paragraph(
-            f"Start: {start_time}",
-            styles["Normal"]
+    # Browser activity table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS browser_activity (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            title TEXT,
+            url TEXT
         )
-    )
+    """)
 
-    elements.append(
-        Paragraph(
-            f"End: {end_time}",
-            styles["Normal"]
-        )
-    )
-
-    elements.append(Spacer(1, 20))
-
-    table_data = [
-        [
-            "Start Time",
-            "End Time",
-            "Duration",
-            "Application"
-        ]
-    ]
-
-    for row in rows:
-        table_data.append(list(row))
-
-    table = Table(table_data)
-
-    elements.append(table)
-
-    document.build(elements)
-
-    return filepath
-
-# ====================== Save Report in Database ================
-
-
-def save_report_to_database(
-    start_time,
-    end_time,
-    excel_path,
-    pdf_path
-):
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Ensure the reports table exists (auto-creates on first run,
-    # fixes "no such table: reports" error)
+    # Reports table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,67 +45,81 @@ def save_report_to_database(
         )
     """)
 
+    conn.commit()
+    conn.close()
+
+    print("Database ready")
+
+
+def save_activity(start_time, end_time, duration, window_title):
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
     cursor.execute("""
-        INSERT INTO reports
-        (
-            generated_at,
-            start_time,
-            end_time,
-            excel_path,
-            pdf_path
-        )
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO activity_log
+        (start_time, end_time, duration, window_title)
+        VALUES (?, ?, ?, ?)
     """, (
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         str(start_time),
         str(end_time),
-        excel_path,
-        pdf_path
+        str(duration),
+        str(window_title)
     ))
 
     conn.commit()
     conn.close()
 
 
-# ===================
+def get_all_activity():
 
-def generate_report(start_time, end_time):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
-    print("\n==============================")
-    print("Generating 8 Hour Report...")
-    print("==============================")
+    cursor.execute("""
+        SELECT id, start_time, end_time, duration, window_title
+        FROM activity_log
+        ORDER BY id DESC
+    """)
 
-    rows = get_activity_data(
-        start_time,
-        end_time
-    )
+    rows = cursor.fetchall()
 
-    if not rows:
-        print("No activity found for this period.")
-        return
+    conn.close()
 
-    excel_path = create_excel_report(
-        rows,
-        start_time,
-        end_time
-    )
+    return rows
 
-    pdf_path = create_pdf_report(
-        rows,
-        start_time,
-        end_time
-    )
 
-    save_report_to_database(
-        start_time,
-        end_time,
-        excel_path,
-        pdf_path
-    )
+def save_browser_activity(title, url):
 
-    print("Excel Report:", excel_path)
-    print("PDF Report:", pdf_path)
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
-    print("==============================")
-    print("Report Generated Successfully")
-    print("==============================")
+    cursor.execute("""
+        INSERT INTO browser_activity
+        (timestamp, title, url)
+        VALUES (datetime('now', 'localtime'), ?, ?)
+    """, (
+        title,
+        url
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def get_browser_activity():
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT timestamp, title, url
+        FROM browser_activity
+        ORDER BY id DESC
+    """)
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
