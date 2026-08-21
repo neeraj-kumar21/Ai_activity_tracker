@@ -88,6 +88,23 @@ def get_all_activity():
 
     return rows
 
+def get_analytics_data():
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT window_title, duration
+        FROM activity_log
+        ORDER BY id ASC
+    """)
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
 
 def save_browser_activity(title, url):
 
@@ -115,6 +132,29 @@ def get_browser_activity():
     cursor.execute("""
         SELECT timestamp, title, url
         FROM browser_activity
+        ORDER BY id DESC
+    """)
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
+def get_reports():
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            generated_at,
+            start_time,
+            end_time,
+            excel_path,
+            pdf_path
+        FROM reports
         ORDER BY id DESC
     """)
 

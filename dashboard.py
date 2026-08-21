@@ -95,4 +95,4 @@ def start_dashboard():
 
     show_home()
 
-    app.mainloop()
+app.mainloop()

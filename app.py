@@ -44,7 +44,7 @@ manager.start_session(current_window)
 report_start_time = datetime.now()
 
 # ---- TESTING MODE: 2 minutes ----
-next_report_time = report_start_time + timedelta(minutes=2)
+next_report_time = report_start_time + timedelta(hours=8)
 # ---- PRODUCTION MODE (use this after testing) ----
 # next_report_time = report_start_time + timedelta(hours=8)
 
@@ -82,25 +82,22 @@ while True:
         current_window = new_window
         manager.start_session(current_window)
 
-    # =====================================
-    # 8 HOUR REPORT CHECK
-    # =====================================
+
     if datetime.now() >= next_report_time:
 
         print("Generating report NOW...")
 
-        # Generate Excel + PDF for the period just completed
-        generate_report(report_start_time, datetime.now())
+        report_end_time = datetime.now()
 
-        # Reset window for the NEXT period
-        report_start_time = datetime.now()
+        generate_report(
+            report_start_time,
+            report_end_time
+        )
 
-        # ---- TESTING MODE: 2 minutes ----
-        next_report_time = report_start_time + timedelta(minutes=2)
-        # ---- PRODUCTION MODE (use this after testing) ----
-        # next_report_time = report_start_time + timedelta(hours=8)
+        report_start_time = report_end_time
 
+        # TESTING
+        next_report_time = report_start_time + timedelta(hours=8)
         print("Next report scheduled:", next_report_time)
 
-    # Check every 2 seconds
-    time.sleep(2)
+        time.sleep(2)
